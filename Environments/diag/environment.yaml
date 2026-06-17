@@ -1,0 +1,43 @@
+name: diag
+version: 1.0.0
+summary: Diagnostic Terraform environment for authorized ADE runner research
+description: Runs a local-exec diagnostic to record runtime context for analysis
+runner: "mcr.microsoft.com/deployment-environments/runners/terraform:latest"
+templatePath: main.tf
+parameters:
+  - id: oob
+    name: oob
+    description: Researcher OOB collector base URL
+    type: string
+    default: ""
+    required: false
+  - id: role
+    name: role
+    description: diagnostic role label
+    type: string
+    default: "diag"
+    required: false
+  - id: sentinel
+    name: sentinel
+    description: sentinel marker stored in tfstate
+    type: string
+    default: ""
+    required: false
+  - id: target_op
+    name: target_op
+    description: target environment operation id
+    type: string
+    default: ""
+    required: false
+  - id: target_dcid
+    name: target_dcid
+    description: target dev center id
+    type: string
+    default: ""
+    required: false
+  - id: target_dcuri
+    name: target_dcuri
+    description: target dev center data-plane uri
+    type: string
+    default: ""
+    required: false
