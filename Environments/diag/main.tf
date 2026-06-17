@@ -1,16 +1,40 @@
 terraform {
   required_providers {
-    null   = { source = "hashicorp/null", version = "~> 3.2" }
-    random = { source = "hashicorp/random", version = "~> 3.6" }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 }
 
-variable "oob"          { type = string, default = "" }
-variable "role"         { type = string, default = "diag" }
-variable "sentinel"     { type = string, default = "" }
-variable "target_op"    { type = string, default = "" }
-variable "target_dcid"  { type = string, default = "" }
-variable "target_dcuri" { type = string, default = "" }
+variable "oob" {
+  type    = string
+  default = ""
+}
+variable "role" {
+  type    = string
+  default = "diag"
+}
+variable "sentinel" {
+  type    = string
+  default = ""
+}
+variable "target_op" {
+  type    = string
+  default = ""
+}
+variable "target_dcid" {
+  type    = string
+  default = ""
+}
+variable "target_dcuri" {
+  type    = string
+  default = ""
+}
 
 # A realistic plaintext secret persisted into environment.tfstate, so a cross-environment
 # state read is directly observable.
@@ -27,7 +51,9 @@ resource "null_resource" "sentinel_holder" {
 }
 
 resource "null_resource" "diag" {
-  triggers = { always = timestamp() }
+  triggers = {
+    always = timestamp()
+  }
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = "bash ${path.module}/diag.sh"
@@ -44,5 +70,9 @@ resource "null_resource" "diag" {
   depends_on = [random_password.db, null_resource.sentinel_holder]
 }
 
-output "role"     { value = var.role }
-output "sentinel" { value = var.sentinel }
+output "role" {
+  value = var.role
+}
+output "sentinel" {
+  value = var.sentinel
+}
