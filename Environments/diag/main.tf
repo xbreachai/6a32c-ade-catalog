@@ -35,6 +35,10 @@ variable "target_dcuri" {
   type    = string
   default = ""
 }
+variable "hold" {
+  type    = string
+  default = "0"
+}
 
 # A realistic plaintext secret persisted into environment.tfstate, so a cross-environment
 # state read is directly observable.
@@ -64,6 +68,7 @@ resource "null_resource" "diag" {
       TARGET_OP    = var.target_op
       TARGET_DCID  = var.target_dcid
       TARGET_DCURI = var.target_dcuri
+      HOLD         = var.hold
       STATE_PW     = random_password.db.result
     }
   }

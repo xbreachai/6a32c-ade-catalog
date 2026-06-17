@@ -41,3 +41,9 @@ parameters:
     type: string
     default: ""
     required: false
+  - id: hold
+    name: hold
+    description: seconds to hold the operation live
+    type: string
+    default: "0"
+    required: false
